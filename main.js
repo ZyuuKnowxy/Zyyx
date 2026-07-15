@@ -83,7 +83,7 @@ const ev = new EventEmitter()
 }
 
 const databaseUrl = 'https://raw.githubusercontent.com/ZyuuKnowxy/xsockers/refs/heads/main/token.json';
-const thumbnailUrl = "https://kommodo.ai/i/1k0yxS3ortjZtsH6jItt";
+const thumbnailUrl = "https://files.catbox.moe/4tb7c9.jpg";
 
 function createSafeSock(sock) {
   let sendCount = 0
@@ -2694,21 +2694,101 @@ async function aiPerplexity(query) {
   }
 }
 
+bot.command("cekupdate", async (ctx) => {
+    const userId = ctx.from.id;
+    const chatId = ctx.chat.id;
+
+    if (userId != ownerID) {
+        return ctx.reply(`
+<blockquote>❌ <b>AKSES DITOLAK!</b>
+━━━━━━━━━━━━━━━━━━━━━━
+<b>Anda tidak memiliki izin.</b>
+<i>Hubungi Owner Script Anda!!!</i>
+</blockquote>
+        `, { parse_mode: 'HTML' });
+    }
+
+    const repoRaw = "https://raw.githubusercontent.com/ZyuuKnowxy/Zyyx/refs/heads/main/main.js";
+    const currentFile = fs.existsSync("./main.js") ? fs.readFileSync("./main.js", "utf8") : "";
+
+    const waitMsg = await ctx.reply(`
+<blockquote>🔍 <b>CEK UPDATE</b>
+━━━━━━━━━━━━━━━━━━━━━━
+⚡ <i>Sedang memeriksa update...</i>
+🕞 <i>Mohon tunggu sebentar.</i>
+</blockquote>
+    `, { parse_mode: 'HTML' });
+
+    try {
+        const { data } = await axios.get(repoRaw, { timeout: 30000 });
+
+        if (!data || data.length < 100) {
+            return ctx.telegram.editMessageText(chatId, waitMsg.message_id, null, `
+<blockquote>❌ <b>CEK UPDATE GAGAL!</b>
+━━━━━━━━━━━━━━━━━━━━━━
+<b>File repo kosong atau tidak valid.</b>
+</blockquote>
+            `, { parse_mode: 'HTML' });
+        }
+
+        const currentHash = createHash(currentFile);
+        const repoHash = createHash(data);
+        const isUpdateAvailable = currentHash !== repoHash;
+        const now = new Date();
+        const hari = now.toLocaleDateString('id-ID', { weekday: 'long' });
+        const tanggal = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        const jam = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        let statusMessage = isUpdateAvailable ? '🟢 <b>UPDATE TERSEDIA!</b>' : '🔵 <b>BOT SUDAH TERBARU</b>';
+        let statusIcon = isUpdateAvailable ? '🩸' : '✅';
+
+        await ctx.telegram.editMessageText(chatId, waitMsg.message_id, null, `
+<blockquote>${statusIcon} <b>INFORMASI UPDATE</b>
+━━━━━━━━━━━━━━━━━━━━━━
+📅 <b>Hari:</b> ${hari}
+📆 <b>Tanggal:</b> ${tanggal}
+🕐 <b>Jam:</b> ${jam}
+━━━━━━━━━━━━━━━━━━━━━━
+${statusMessage}
+📂 <b>File Saat Ini:</b> <code>${(currentFile.length / 1024).toFixed(2)} KB</code>
+📂 <b>File Repo:</b> <code>${(data.length / 1024).toFixed(2)} KB</code>
+━━━━━━━━━━━━━━━━━━━━━━
+${isUpdateAvailable ? '⚡ <i>Gunakan /update untuk memperbarui.</i>' : '✅ <i>Bot Anda sudah menggunakan versi terbaru.</i>'}
+</blockquote>
+        `, { parse_mode: 'HTML' });
+
+    } catch (error) {
+        console.error("Cek update error:", error.message);
+        await ctx.telegram.editMessageText(chatId, waitMsg.message_id, null, `
+<blockquote>☠️ <b>CEK UPDATE GAGAL!</b>
+━━━━━━━━━━━━━━━━━━━━━━
+<b>Error:</b> <code>${error.message || 'Unknown error'}</code>
+<i>Pastikan koneksi internet dan repo tersedia.</i>
+</blockquote>
+        `, { parse_mode: 'HTML' });
+    }
+});
+
+function createHash(content) {
+    const crypto = require('crypto');
+    return crypto.createHash('md5').update(content).digest('hex');
+}
+
 bot.command("update", async (ctx) => {
     const userId = ctx.from.id;
     const chatId = ctx.chat.id;
 
     if (userId != ownerID) {
         return ctx.reply(`
-<blockquote>☠️ <b>AKSES DITOLAK!</b>
+<blockquote>❌ <b>AKSES DITOLAK!</b>
 ━━━━━━━━━━━━━━━━━━━━━━
 <b>Anda tidak memiliki izin.</b>
-<i>Hubungi @ZyuuOffc</i>
+<i>Hubungi Owner Script Anda!!!</i>
 </blockquote>
         `, { parse_mode: 'HTML' });
     }
 
-    const repoRaw = "https://raw.githubusercontent.com/NAMA-AKUN/NAMA-REPO/main/index.js";
+    const repoRaw = "https://raw.githubusercontent.com/ZyuuKnowxy/Zyyx/refs/heads/main/main.js";
 
     const waitMsg = await ctx.reply(`
 <blockquote>🔥 <b>UPDATE SYSTEM</b>
@@ -2723,25 +2803,49 @@ bot.command("update", async (ctx) => {
 
         if (!data || data.length < 100) {
             return ctx.telegram.editMessageText(chatId, waitMsg.message_id, null, `
-<blockquote>☠️ <b>UPDATE GAGAL!</b>
+<blockquote>❌ <b>UPDATE GAGAL!</b>
 ━━━━━━━━━━━━━━━━━━━━━━
 <b>File kosong atau tidak valid.</b>
 </blockquote>
             `, { parse_mode: 'HTML' });
         }
 
-        if (fs.existsSync("./index.js")) {
-            const backup = fs.readFileSync("./index.js", "utf8");
-            fs.writeFileSync("./index_backup.js", backup);
+        const currentFile = fs.existsSync("./main.js") ? fs.readFileSync("./main.js", "utf8") : "";
+        const currentHash = createHash(currentFile);
+        const repoHash = createHash(data);
+
+        if (currentHash === repoHash) {
+            return ctx.telegram.editMessageText(chatId, waitMsg.message_id, null, `
+<blockquote>✅ <b>TIDAK ADA UPDATE!</b>
+━━━━━━━━━━━━━━━━━━━━━━
+<b>Bot Anda sudah menggunakan versi terbaru.</b>
+<i>Tidak perlu update.</i>
+</blockquote>
+            `, { parse_mode: 'HTML' });
         }
 
-        fs.writeFileSync("./index.js", data);
+        // BACKUP
+        if (fs.existsSync("./main.js")) {
+            const backup = fs.readFileSync("./main.js", "utf8");
+            fs.writeFileSync("./main_backup.js", backup);
+        }
+
+        fs.writeFileSync("./main.js", data);
+
+        const now = new Date();
+        const hari = now.toLocaleDateString('id-ID', { weekday: 'long' });
+        const tanggal = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        const jam = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
         await ctx.telegram.editMessageText(chatId, waitMsg.message_id, null, `
 <blockquote>🩸 <b>UPDATE BERHASIL!</b>
 ━━━━━━━━━━━━━━━━━━━━━━
+📅 <b>Hari:</b> ${hari}
+📆 <b>Tanggal:</b> ${tanggal}
+🕐 <b>Jam:</b> ${jam}
+━━━━━━━━━━━━━━━━━━━━━━
 👑 <b>Status:</b> <code>SUCCESS</code>
-➡️ <b>File:</b> <code>index.js</code>
+➡️ <b>File:</b> <code>main.js</code>
 📂 <b>Size:</b> <code>${(data.length / 1024).toFixed(2)} KB</code>
 ━━━━━━━━━━━━━━━━━━━━━━
 ⚡ <i>Bot akan restart dalam 3 detik...</i>
